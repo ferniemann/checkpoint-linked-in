@@ -7,9 +7,8 @@ function getUserData() {
             if (users.length < 8) {
                 data[0].id = createId(data[0].name.first + data[0].name.last);
                 users.push(data);
-                getUserData();
-            } else {
                 renderUserData();
+            } else {
                 connect();
                 deleteUserCard();
             }
@@ -17,11 +16,10 @@ function getUserData() {
 }
 
 function renderUserData() {
-    const cards = document.querySelector("#cards");
-    cards.innerText = "";
-    users.forEach((user) => {
-        createUserCard(user);
-    });
+    for (let i = users.length - 1; i < users.length; i++) {
+        createUserCard(users[i]);
+        getUserData();
+    }
 }
 
 function createUserCard(user) {
@@ -111,7 +109,10 @@ function deleteUserCard() {
     const deleteButtons = document.querySelectorAll(".card__delete");
 
     deleteButtons.forEach((button) => {
-        button.addEventListener("click", function () {
+        button.addEventListener("click", function (e) {
+            const allCards = document.querySelector("#cards");
+            const parent = e.target.parentElement;
+            allCards.removeChild(parent);
             users = users.filter((user) => user[0].id !== button.getAttribute("data-id"));
             getUserData();
         });
