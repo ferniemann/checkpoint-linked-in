@@ -1,4 +1,5 @@
 let users = [];
+let pendingCount = 0;
 
 function getUserData() {
     fetch("https://dummy-apis.netlify.app/api/contact-suggestions?count=1")
@@ -8,9 +9,9 @@ function getUserData() {
                 data[0].id = createId(data[0].name.first + data[0].name.last);
                 users.push(data);
                 renderUserData();
-            } else {
-                connect();
                 deleteUserCard();
+            } else {
+                return;
             }
         });
 }
@@ -58,11 +59,13 @@ function createUserCard(user) {
     btnConnect.classList.add("card__connect");
     btnConnect.setAttribute("data-btn", "connect");
     btnConnect.innerText = "Connect";
+    btnConnect.addEventListener("click", connect);
 
     const btnDelete = document.createElement("button");
     btnDelete.classList.add("card__delete");
     btnDelete.setAttribute("data-id", user.id);
     btnDelete.innerText = "X";
+    btnDelete.addEventListener("click", deleteUserCard);
 
     card.append(coverImg, profileImg, name, title, mutuals, btnConnect, btnDelete);
 
@@ -73,50 +76,45 @@ function createId(string) {
     return string.trim().replace(" ", "").toLowerCase();
 }
 
-function connect() {
-    const connectButtons = document.querySelectorAll(".card__connect");
-    const pendingArea = document.querySelector("#pending");
-    let pendingCount = 0;
+function connect(e) {
+    const button = e.target;
 
-    connectButtons.forEach((button) => {
-        button.addEventListener("click", function () {
-            if (button.getAttribute("data-btn") === "connect") {
-                pendingCount++;
-                renderPendingCount(pendingCount, pendingArea);
-                button.setAttribute("data-btn", pending);
-                button.innerText = "Pending";
-            } else {
-                pendingCount--;
-                renderPendingCount(pendingCount, pendingArea);
-                button.setAttribute("data-btn", "connect");
-                button.innerText = "Connect";
-            }
-        });
-    });
-}
-
-function renderPendingCount(count, area) {
-    if (!count) {
-        area.innerText = "No pending invitations";
-    } else if (count > 1) {
-        area.innerText = `${count} pending invitations`;
-    } else {
-        area.innerText = `${count} pending invitation`;
+    if (button.getAttribute("data-btn") === "connect") {
+        pendingCount++;
+        button.innerText = "Pending";
+        button.setAttribute("data-btn", "pending");
+        renderPendingCount();
+    } else if (button.getAttribute("data-btn") === "pending") {
+        pendingCount--;
+        button.innerText = "Connect";
+        button.setAttribute("data-btn", "connect");
+        renderPendingCount();
     }
 }
 
-function deleteUserCard() {
-    const deleteButtons = document.querySelectorAll(".card__delete");
+function renderPendingCount() {
+    const pendingCountElement = document.querySelector("#pending");
 
-    deleteButtons.forEach((button) => {
-        button.addEventListener("click", function (e) {
-            const allCards = document.querySelector("#cards");
-            const parent = e.target.parentElement;
-            allCards.removeChild(parent);
-            users = users.filter((user) => user[0].id !== button.getAttribute("data-id"));
-            getUserData();
-        });
-    });
+    if (pendingCount === 0) {
+        pendingCountElement.innerText = "No pending invitations";
+    } else if (pendingCount === 1) {
+        pendingCountElement.innerText = "1 pending invitation";
+    } else if (pendingCount > 1) {
+        pendingCountElement.innerText = `${pendingCount} pending invitations`;
+    }
+}
+
+function deleteUserCard(e) {
+    const allCards = document.querySelector("#cards");
+
+    if (e) {
+        console.log("Test");
+        const button = e.target;
+        const parent = e.target.parentElement;
+        allCards.removeChild(parent);
+        users = users.filter((user) => user[0].id !== button.getAttribute("data-id"));
+        getUserData();
+    }
 }
 
 getUserData();
