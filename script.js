@@ -1,5 +1,5 @@
 let users = [];
-let pendingCount = 0;
+let pendingCount = localStorage.getItem("count") || 0;
 
 function getUserData() {
     fetch("https://dummy-apis.netlify.app/api/contact-suggestions?count=1")
@@ -9,7 +9,6 @@ function getUserData() {
                 data[0].id = createId(data[0].name.first + data[0].name.last);
                 users.push(data);
                 renderUserData();
-                deleteUserCard();
             } else {
                 return;
             }
@@ -72,20 +71,18 @@ function createUserCard(user) {
     cards.append(card);
 }
 
-function createId(string) {
-    return string.trim().replace(" ", "").toLowerCase();
-}
-
 function connect(e) {
     const button = e.target;
 
     if (button.getAttribute("data-btn") === "connect") {
         pendingCount++;
+        localStorage.setItem("count", pendingCount);
         button.innerText = "Pending";
         button.setAttribute("data-btn", "pending");
         renderPendingCount();
     } else if (button.getAttribute("data-btn") === "pending") {
         pendingCount--;
+        localStorage.setItem("count", pendingCount);
         button.innerText = "Connect";
         button.setAttribute("data-btn", "connect");
         renderPendingCount();
@@ -117,4 +114,9 @@ function deleteUserCard(e) {
     }
 }
 
+function createId(string) {
+    return string.trim().replaceAll(" ", "").toLowerCase();
+}
+
 getUserData();
+renderPendingCount();
