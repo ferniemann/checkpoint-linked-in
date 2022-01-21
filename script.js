@@ -105,9 +105,8 @@ function deleteUserCard(e) {
     const allCards = document.querySelector("#cards");
 
     if (e) {
-        console.log("Test");
         const button = e.target;
-        const parent = e.target.parentElement;
+        const parent = button.parentElement;
         allCards.removeChild(parent);
         users = users.filter((user) => user[0].id !== button.getAttribute("data-id"));
         getUserData();
