@@ -1,42 +1,37 @@
 let users = [];
-let pendingCount = localStorage.getItem("count") || 0;
+let pendingCounter = localStorage.getItem("counter") || 0;
 
 function getUserData() {
-    fetch("https://dummy-apis.netlify.app/api/contact-suggestions?count=1")
+    const count = 8 - users.length;
+    const start = users.length;
+
+    fetch(`https://dummy-apis.netlify.app/api/contact-suggestions?count=${count}`)
         .then((res) => res.json())
-        .then((data) => {
-            if (users.length < 8) {
-                data[0].id = createId(data[0].name.first + data[0].name.last);
-                users.push(data);
-                renderUserData();
-            } else {
-                return;
-            }
+        .then((userData) => {
+            userData.forEach((user) => {
+                user.id = createId(user.name.first + user.name.last);
+                users.push(user);
+            });
+            renderUserData(start);
         });
 }
 
-function renderUserData() {
-    for (let i = users.length - 1; i < users.length; i++) {
-        createUserCard(users[i]);
-        getUserData();
+function renderUserData(start) {
+    console.log("runs");
+    const cards = document.querySelector("#cards");
+
+    for (let i = start; i < 8; i++) {
+        createUserCard(users[i], cards);
     }
 }
 
-function createUserCard(user) {
-    const cards = document.querySelector("#cards");
-    user = user[0];
-
-    const card = document.createElement("div");
-    card.classList.add("card");
-    card.id = user.id;
+function createUserCard(user, destination) {
+    const container = document.createElement("div");
+    container.classList.add("card");
 
     const coverImg = document.createElement("img");
     coverImg.classList.add("card__cover");
-    if (user.backgroundImage) {
-        coverImg.src = user.backgroundImage;
-    } else {
-        coverImg.src = "https://picsum.photos/300/300";
-    }
+    coverImg.src = user.backgroundImage || "https://picsum.photos/300/300";
 
     const profileImg = document.createElement("img");
     profileImg.classList.add("card__profile-photo");
@@ -56,61 +51,54 @@ function createUserCard(user) {
 
     const btnConnect = document.createElement("button");
     btnConnect.classList.add("card__connect");
-    btnConnect.setAttribute("data-btn", "connect");
     btnConnect.innerText = "Connect";
-    btnConnect.addEventListener("click", connect);
+    btnConnect.addEventListener("click", pendingCount);
 
     const btnDelete = document.createElement("button");
     btnDelete.classList.add("card__delete");
-    btnDelete.setAttribute("data-id", user.id);
+    btnDelete.id = user.id;
     btnDelete.innerText = "X";
-    btnDelete.addEventListener("click", deleteUserCard);
+    btnDelete.addEventListener("click", deleteUser);
 
-    card.append(coverImg, profileImg, name, title, mutuals, btnConnect, btnDelete);
-
-    cards.append(card);
+    container.append(coverImg, profileImg, name, title, mutuals, btnConnect, btnDelete);
+    destination.append(container);
 }
 
-function connect(e) {
+function pendingCount(e) {
     const button = e.target;
 
-    if (button.getAttribute("data-btn") === "connect") {
-        pendingCount++;
-        localStorage.setItem("count", pendingCount);
+    if (button.innerText === "Connect") {
+        pendingCounter++;
+        localStorage.setItem("counter", pendingCounter);
+        renderPendingCount();
         button.innerText = "Pending";
-        button.setAttribute("data-btn", "pending");
+    } else {
+        pendingCounter--;
+        localStorage.setItem("counter", pendingCounter);
         renderPendingCount();
-    } else if (button.getAttribute("data-btn") === "pending") {
-        pendingCount--;
-        localStorage.setItem("count", pendingCount);
         button.innerText = "Connect";
-        button.setAttribute("data-btn", "connect");
-        renderPendingCount();
     }
 }
 
 function renderPendingCount() {
-    const pendingCountElement = document.querySelector("#pending");
+    const pendingText = document.querySelector("#pending");
 
-    if (pendingCount === 0) {
-        pendingCountElement.innerText = "No pending invitations";
-    } else if (pendingCount === 1) {
-        pendingCountElement.innerText = "1 pending invitation";
-    } else if (pendingCount > 1) {
-        pendingCountElement.innerText = `${pendingCount} pending invitations`;
+    if (pendingCounter === 0) {
+        pendingText.innerText = "No pending invitations";
+    } else if (pendingCounter === 1) {
+        pendingText.innerText = "1 pending invitation";
+    } else if (pendingCounter > 1) {
+        pendingText.innerText = `${pendingCounter} pending invitations`;
     }
 }
 
-function deleteUserCard(e) {
-    const allCards = document.querySelector("#cards");
+function deleteUser(e) {
+    const button = e.target;
+    const parent = button.parentElement;
+    parent.remove();
 
-    if (e) {
-        const button = e.target;
-        const parent = button.parentElement;
-        allCards.removeChild(parent);
-        users = users.filter((user) => user[0].id !== button.getAttribute("data-id"));
-        getUserData();
-    }
+    users = users.filter((user) => user.id !== button.id);
+    getUserData();
 }
 
 function createId(string) {
